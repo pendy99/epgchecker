@@ -26,9 +26,11 @@ jobs:
           requirements: 'requirements.txt'
           exe_path: ./dist
           upload_exe_with_name: 'epgchecker-win'
-      - uses: AButler/upload-release-assets@v2.0
+      - uses: alexellis/upload-assets@0.4.0
+        env:
+            GITHUB_TOKEN: ${{ github.token }}
         with:
-            files: './repo/dist/*'
+            asset_paths: '["./repo/dist/*"]'
             repo-token: ${{ secrets.GITHUB_TOKEN }}
             release-tag: ${{  github.ref_name }}
 
@@ -96,9 +98,11 @@ jobs:
         with:
           name: epgchecker_linux_${{ matrix.arch }}
           path: repo/dist/epgchecker_linux_${{ matrix.arch }}
-      - uses: AButler/upload-release-assets@v2.0
+      - uses: alexellis/upload-assets@0.4.0
+        env:
+            GITHUB_TOKEN: ${{ github.token }}
         with:
-            files: './repo/dist/*'
+            asset_paths: '["./repo/dist/*"]'
             repo-token: ${{ secrets.GITHUB_TOKEN }}
             release-tag: ${{  github.ref_name }}
           
