@@ -17,6 +17,12 @@ jobs:
        
     runs-on: windows-latest
     steps:
+      - name: Install dependencies
+        run: |
+              echo "Download UPX"
+              Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-win64.zip" -OutFile "upx.zip"
+              Expand-Archive -Path upx.zip
+              cp upx/upx-4.0.2-win64/upx.exe ./upx.exe
       - name: Create Win Executable
         uses: sayyid5416/pyinstaller@v1.2.0
         with:
@@ -85,7 +91,7 @@ jobs:
           install: |
                 apt-get update -q -y
                 apt-get install -q -y git
-                apt -y install zlib1g-dev python3.8 python3.8-dev python3.8-distutils python3-pip
+                apt -y install zlib1g-dev python3.8 python3.8-dev python3.8-distutils python3-pip upx
                 python3.8 -m pip install -U pip setuptools wheel
                 python3.8 -m pip install -U Pyinstaller httpx==0.23.3
                
