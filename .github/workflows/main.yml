@@ -24,8 +24,13 @@ jobs:
           python_ver: '3.9'
           spec: 'build.spec'
           requirements: 'requirements.txt'
-          exe_path: ./dist/win
+          exe_path: ./dist
           upload_exe_with_name: 'epgchecker-win'
+      - uses: AButler/upload-release-assets@v2.0
+         with:
+            files: './dist/*'
+            repo-token: ${{ secrets.GITHUB_TOKEN }}
+            release-tag: ${{  github.ref_name }}
 
   pyinstaller-linux-build:
     permissions:
@@ -91,6 +96,11 @@ jobs:
         with:
           name: epgchecker_linux_${{ matrix.arch }}
           path: repo/dist/epgchecker_linux_${{ matrix.arch }}
+      - uses: AButler/upload-release-assets@v2.0
+         with:
+            files: './dist/*'
+            repo-token: ${{ secrets.GITHUB_TOKEN }}
+            release-tag: ${{  github.ref_name }}
           
 #   pyinstaller-macos-build:
 #     runs-on: macos-latest
@@ -104,17 +114,17 @@ jobs:
 #           exe_path: ./dist/macos
 #           upload_exe_with_name: 'epgchecker-macos'  
 
-  publish:
-    runs-on: ubuntu-latest
-    needs:
-      - pyinstaller-win-build
-      - pyinstaller-linux-build
-    steps:
-     - uses: AButler/upload-release-assets@v2.0
-       with:
-          files: 'artifacts/*'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: ${{  github.ref_name }}
+#   publish:
+#     runs-on: ubuntu-latest
+#     needs:
+#       - pyinstaller-win-build
+#       - pyinstaller-linux-build
+#     steps:
+#      - uses: AButler/upload-release-assets@v2.0
+#        with:
+#           files: 'artifacts/*'
+#           repo-token: ${{ secrets.GITHUB_TOKEN }}
+#           release-tag: ${{  github.ref_name }}
 #     - uses: echapmanFromBunnings/upload-release-assets@1.3
 #        with:
 #         releaseTag: '0.0.1'
