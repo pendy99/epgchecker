@@ -31,13 +31,19 @@ jobs:
             GITHUB_TOKEN: ${{ github.token }}
         with:
             asset_paths: '["./repo/dist/*"]'
-            repo-token: ${{ secrets.GITHUB_TOKEN }}
-            release-tag: ${{  github.ref_name }}
+#             repo-token: ${{ secrets.GITHUB_TOKEN }}
+#             release-tag: ${{  github.ref_name }}
 
   pyinstaller-linux-build:
     permissions:
-       contents: read
        packages: write # for creating cache
+       contents: write
+       checks: write
+       actions: read
+       issues: read
+       pull-requests: read
+       repository-projects: read
+       statuses: read
     runs-on: ubuntu-latest
     name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
 
@@ -103,8 +109,6 @@ jobs:
             GITHUB_TOKEN: ${{ github.token }}
         with:
             asset_paths: '["./repo/dist/*"]'
-            repo-token: ${{ secrets.GITHUB_TOKEN }}
-            release-tag: ${{  github.ref_name }}
           
 #   pyinstaller-macos-build:
 #     runs-on: macos-latest
