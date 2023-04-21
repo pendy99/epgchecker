@@ -13,9 +13,8 @@ permissions:
   
 jobs:          
   pyinstaller-win-build:
-    permissions:
-       contents: read
-       packages: write # for creating cache
+    permissions: write-all
+       
     runs-on: windows-latest
     steps:
       - name: Create Win Executable
