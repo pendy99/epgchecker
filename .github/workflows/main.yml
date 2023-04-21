@@ -28,7 +28,7 @@ jobs:
           upload_exe_with_name: 'epgchecker-win'
       - uses: AButler/upload-release-assets@v2.0
         with:
-            files: './dist/*'
+            files: './repo/dist/*'
             repo-token: ${{ secrets.GITHUB_TOKEN }}
             release-tag: ${{  github.ref_name }}
 
@@ -98,7 +98,7 @@ jobs:
           path: repo/dist/epgchecker_linux_${{ matrix.arch }}
       - uses: AButler/upload-release-assets@v2.0
         with:
-            files: './dist/*'
+            files: './repo/dist/*'
             repo-token: ${{ secrets.GITHUB_TOKEN }}
             release-tag: ${{  github.ref_name }}
           
