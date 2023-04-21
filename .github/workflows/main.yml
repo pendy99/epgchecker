@@ -1,0 +1,167 @@
+name: releaser
+
+on:
+  push:
+    # run only against tags
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+  # packages: write
+  # issues: write
+  
+jobs:          
+  pyinstaller-win-build:
+    runs-on: windows-latest
+    steps:
+      - name: Create Win Executable
+        uses: sayyid5416/pyinstaller@v1.2.0
+        with:
+          python_ver: '3.9'
+          spec: 'build.spec'
+          requirements: 'requirements.txt'
+          exe_path: ./dist/win
+          upload_exe_with_name: 'epgchecker-win'
+
+  pyinstaller-linux-build:
+    permissions:
+       contents: read
+       packages: write # for creating cache
+    runs-on: ubuntu-latest
+    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
+
+    # Run steps on a matrix of 4 arch/distro combinations
+    strategy:
+      matrix:
+        include:
+           - arch: armv7
+             distro: ubuntu18.04
+           - arch: x86_64
+             distro: ubuntu18.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+             path: ./repo
+      - uses: lalten/run-on-arch-action@e19aaded64b875a86017d4f248632b1b897ab196
+        name: Build artifact
+        id: build
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
+
+          # Not required, but speeds up builds
+          githubToken: ${{ github.token }}
+          # Mount the artifacts directory as /artifacts in the container
+          dockerRunArgs: |
+            --volume "${PWD}/repo:/repo"
+          # Pass some environment variables to the container
+          env: | # YAML, but pipe character is necessary
+            artifact_name: git-${{ matrix.distro }}_${{ matrix.arch }}
+          # The shell to run commands with in the container
+          shell: /bin/sh
+
+          # Install some dependencies in the container. This speeds up builds if
+          # you are also using githubToken. Any dependencies installed here will
+          # be part of the container image that gets cached, so subsequent
+          # builds don't have to re-install them. The image layer is cached
+          # publicly in your project's package repository, so it is vital that
+          # no secrets are present in the container state or logs.
+          install: |
+                apt-get update -q -y
+                apt-get install -q -y git
+                apt -y install zlib1g-dev python3.8 python3.8-dev python3.8-distutils python3-pip
+                python3.8 -m pip install -U pip setuptools wheel
+                python3.8 -m pip install -U Pyinstaller httpx==0.23.3
+               
+          # Produce a binary artifact and place it in the mounted volume
+          run: |
+            cd repo
+            python3.8 -m pip install -U Pyinstaller -r requirements.txt  # Cached version may be out of date
+            pyinstaller --clean --noconfirm --dist ./dist  "build.spec"
+            mv  ./dist/epgchecker  ./dist/epgchecker_linux_${{ matrix.arch }}
+      - name: Show the artifact
+        run: |
+          ls -al "./repo/dist"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: epgchecker_linux_${{ matrix.arch }}
+          path: repo/dist/epgchecker_linux_${{ matrix.arch }}
+          
+#   pyinstaller-macos-build:
+#     runs-on: macos-latest
+#     steps:
+#       - name: Create Macos Executable
+#         uses: sayyid5416/pyinstaller@v1.2.0
+#         with:
+#           python_ver: '3.9'
+#           spec: 'build.spec'
+#           requirements: 'requirements.txt'
+#           exe_path: ./dist/macos
+#           upload_exe_with_name: 'epgchecker-macos'  
+
+  publish:
+    runs-on: ubuntu-latest
+    needs:
+      - pyinstaller-win-build
+      - pyinstaller-linux-build
+    steps:
+     - uses: AButler/upload-release-assets@v2.0
+       with:
+          files: 'artifacts/*'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+#     - uses: echapmanFromBunnings/upload-release-assets@1.3
+#        with:
+#         releaseTag: '0.0.1'
+#         githubToken: ${{ secrets.GITHUB_TOKEN }}
+#         artefactName: my-artefacts-for-upload
+#         overrideExistingArtefact: true
+#       - name: Upload release binaries
+#         uses: alexellis/upload-assets@master
+#         env:
+#           GITHUB_TOKEN: ${{ github.token }}
+#         with:
+#           asset_paths: '["./dist/win", "./dist/epgchecker_linux_x86_64"]'
+
+#   create-release:
+#     runs-on: ubuntu-latest
+#     needs:
+#       - pyinstaller-win-build
+#       - pyinstaller-linux-build
+#       - pyinstaller-macos-build
+#     steps:
+#       - name: Get commit tag
+#         id: get_tag
+#         run:  echo "TAG_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+
+#       - name: Create Release
+#         uses: actions/create-release@v1
+#         id: create_release
+#         env:
+#           TAG_NAME: ${{ steps.get_tag.outputs.TAG_NAME }}
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+#         if: ${{ env.TAG_NAME != ''}}
+#         with:
+#           tag_name: ${{ env.TAG_NAME }}
+#           release_name: Release ${{ env.TAG_NAME }}
+#           body_path: ./RELEASE.md
+#           draft: false
+
+#       - name: Upload release asset
+#         uses: alexellis/upload-assets@0.4.0
+#         env:
+#           TAG_NAME: ${{ steps.get_tag.outputs.TAG_NAME }}
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           artifact_path: ${{ steps.pyinstaller-win-build.outputs.artifact_path }}
+#           upload_url: ${{ steps.create_release.outputs.upload_url }}
+#           # Agrega los artifacts generados como archivos adjuntos al release
+#           asset_path: |
+#             ./dist/epgchecker-win.zip
+#           asset_name: |
+#             epgchecker-win.zip
+#           asset_content_type: |
+#             application/zip
+#             text/plain
