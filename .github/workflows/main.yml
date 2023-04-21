@@ -31,6 +31,7 @@ jobs:
           requirements: 'requirements.txt'
           exe_path: ./dist
           upload_exe_with_name: 'epgchecker-win'
+          options: --upx-dir ./ 
       - uses: alexellis/upload-assets@0.4.0
         env:
             GITHUB_TOKEN: ${{ github.token }}
