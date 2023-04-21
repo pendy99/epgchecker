@@ -30,7 +30,7 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ github.token }}
         with:
-            asset_paths: '["./repo/dist/*"]'
+            asset_paths: '["./dist/*"]'
 #             repo-token: ${{ secrets.GITHUB_TOKEN }}
 #             release-tag: ${{  github.ref_name }}
 
